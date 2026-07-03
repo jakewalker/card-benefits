@@ -4,7 +4,7 @@
  * Phase D (parse) — implement inside those files; do not restructure this one.
  */
 import { Hono } from "hono";
-import { authMiddleware } from "./auth";
+import authRoutes, { authMiddleware } from "./auth";
 import cards from "./routes/cards";
 import benefits from "./routes/benefits";
 import usage from "./routes/usage";
@@ -27,6 +27,7 @@ const app = new Hono<AppEnv>();
 
 app.use("/api/*", authMiddleware);
 
+app.route("/api", authRoutes); // POST /api/login (middleware passes it through)
 app.route("/api", dashboard);
 app.route("/api", cards);
 app.route("/api", benefits);

@@ -14,7 +14,7 @@
     "deploy": "npm run build && wrangler deploy -c dist/card_benefits/wrangler.json"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.60.0",
+    "@anthropic-ai/sdk": "^0.110.0",
     "hono": "^4.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
