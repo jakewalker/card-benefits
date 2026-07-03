@@ -16,9 +16,7 @@
     {
       "binding": "DB",
       "database_name": "card_benefits",
-      // Placeholder for local dev; replaced with the real ID when the remote
-      // database is created at deploy time (wrangler d1 create card_benefits).
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "abb4e12d-f71a-4d64-b992-033e667d621d",
       "migrations_dir": "migrations"
     }
   ],
