@@ -58,6 +58,17 @@ Every deploy:
 npm run deploy
 ```
 
+### Push-to-deploy from GitHub (optional)
+
+Cloudflare can deploy on every push to `main` (Workers Builds): dashboard →
+**Workers & Pages → card-benefits → Settings → Build → Connect** → pick the
+`jakewalker/card-benefits` repo. Build command `npm run build`, deploy command
+`npx wrangler deploy -c dist/card_benefits/wrangler.json`.
+
+> ⚠️ Auto-deploys do NOT run D1 migrations. Whenever a new file lands in
+> `migrations/`, run `npm run db:migrate:remote` once by hand (before or right
+> after the push — the schema change must exist before code that uses it).
+
 ### Auth: Cloudflare Access (recommended)
 
 The app ships with `AUTH_MODE: "none"` and expects Cloudflare Access in front:
