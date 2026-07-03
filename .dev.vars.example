@@ -1,0 +1,4 @@
+# Copy to .dev.vars (gitignored) for local development.
+ANTHROPIC_API_KEY=sk-ant-...
+# Only needed when AUTH_MODE=password in wrangler.jsonc:
+APP_PASSWORD=change-me

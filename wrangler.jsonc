@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "card-benefits",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-06-01",
+  "assets": {
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "card_benefits",
+      // Placeholder for local dev; replaced with the real ID when the remote
+      // database is created at deploy time (wrangler d1 create card_benefits).
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    // "none" = rely on Cloudflare Access in front of the app.
+    // "password" = enable the cookie/password middleware in src/worker/auth.ts
+    // (requires APP_PASSWORD secret).
+    "AUTH_MODE": "none"
+  }
+}
