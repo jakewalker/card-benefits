@@ -34,10 +34,83 @@
  * Keys are unique per benefit and lexically sortable within a benefit.
  */
 import type { Benefit, Card, CycleWindow, Frequency, ISODate } from "./types";
+import { WARN_THRESHOLD_DAYS } from "./constants";
+import { addDays, addMonthsClamped, cmpDate, daysBetween } from "./dates";
 
 /** Minimal structural inputs so tests don't need full entities. */
 export type CycleBenefit = Pick<Benefit, "frequency" | "anchor" | "startDate">;
 export type CycleCard = Pick<Card, "anniversaryDate">;
+
+const BLOCK_MONTHS: Record<Frequency, number> = {
+  monthly: 1,
+  quarterly: 3,
+  semiannual: 6,
+  annual: 12,
+};
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+/** Calendar-anchored window containing `date`. */
+function calendarWindow(freq: Frequency, date: ISODate): CycleWindow {
+  const y = Number(date.slice(0, 4));
+  const m = Number(date.slice(5, 7));
+  let startMonth: number;
+  let key: string;
+  switch (freq) {
+    case "monthly":
+      startMonth = m;
+      key = `${y}-${pad2(m)}`;
+      break;
+    case "quarterly": {
+      const q = Math.floor((m - 1) / 3); // 0..3
+      startMonth = q * 3 + 1;
+      key = `${y}-Q${q + 1}`;
+      break;
+    }
+    case "semiannual": {
+      const h = m <= 6 ? 0 : 1;
+      startMonth = h * 6 + 1;
+      key = `${y}-H${h + 1}`;
+      break;
+    }
+    case "annual":
+      startMonth = 1;
+      key = `${y}`;
+      break;
+  }
+  const start = `${y}-${pad2(startMonth)}-01`;
+  const next = addMonthsClamped(start, BLOCK_MONTHS[freq]);
+  const end = addDays(next, -1);
+  return { key, start, end };
+}
+
+/** i-th anniversary boundary; clamping is always re-derived from base's day. */
+function boundary(base: ISODate, i: number, block: number): ISODate {
+  return addMonthsClamped(base, i * block);
+}
+
+/** Anniversary-anchored window containing `date`. */
+function anniversaryWindow(
+  freq: Frequency,
+  card: CycleCard,
+  date: ISODate,
+): CycleWindow {
+  const block = BLOCK_MONTHS[freq];
+  const base = card.anniversaryDate;
+  const by = Number(base.slice(0, 4));
+  const bm = Number(base.slice(5, 7));
+  const dy = Number(date.slice(0, 4));
+  const dm = Number(date.slice(5, 7));
+  // Estimate the block index, then adjust for day-level clamp drift.
+  let i = Math.floor(((dy - by) * 12 + (dm - bm)) / block);
+  while (cmpDate(boundary(base, i, block), date) > 0) i--;
+  while (cmpDate(boundary(base, i + 1, block), date) <= 0) i++;
+  const start = boundary(base, i, block);
+  const end = addDays(boundary(base, i + 1, block), -1);
+  return { key: `A${start}`, start, end };
+}
 
 /** The window (per semantics above) containing `date`. */
 export function cycleForDate(
@@ -45,8 +118,9 @@ export function cycleForDate(
   card: CycleCard,
   date: ISODate,
 ): CycleWindow {
-  void benefit, card, date;
-  throw new Error("unimplemented (Phase A)");
+  return benefit.anchor === "calendar"
+    ? calendarWindow(benefit.frequency, date)
+    : anniversaryWindow(benefit.frequency, card, date);
 }
 
 /** cycleForDate(benefit, card, today). */
@@ -55,8 +129,7 @@ export function currentCycle(
   card: CycleCard,
   today: ISODate,
 ): CycleWindow {
-  void benefit, card, today;
-  throw new Error("unimplemented (Phase A)");
+  return cycleForDate(benefit, card, today);
 }
 
 /**
@@ -70,8 +143,15 @@ export function previousCycles(
   today: ISODate,
   limit: number,
 ): CycleWindow[] {
-  void benefit, card, today, limit;
-  throw new Error("unimplemented (Phase A)");
+  const result: CycleWindow[] = [];
+  if (limit <= 0) return result;
+  const current = currentCycle(benefit, card, today);
+  let w = cycleForDate(benefit, card, addDays(current.start, -1));
+  while (result.length < limit && cmpDate(w.end, benefit.startDate) >= 0) {
+    result.push(w);
+    w = cycleForDate(benefit, card, addDays(w.start, -1));
+  }
+  return result;
 }
 
 /**
@@ -84,20 +164,56 @@ export function cycleWindowForKey(
   card: CycleCard,
   key: string,
 ): CycleWindow | null {
-  void benefit, card, key;
-  throw new Error("unimplemented (Phase A)");
+  if (benefit.anchor === "anniversary") {
+    const m = /^A(\d{4})-(\d{2})-(\d{2})$/.exec(key);
+    if (!m) return null;
+    const mm = Number(m[2]);
+    const dd = Number(m[3]);
+    if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
+    const date = `${m[1]}-${m[2]}-${m[3]}`;
+    const w = anniversaryWindow(benefit.frequency, card, date);
+    return w.start === date ? w : null;
+  }
+  switch (benefit.frequency) {
+    case "monthly": {
+      const m = /^(\d{4})-(\d{2})$/.exec(key);
+      if (!m) return null;
+      const mm = Number(m[2]);
+      if (mm < 1 || mm > 12) return null;
+      const w = calendarWindow("monthly", `${m[1]}-${m[2]}-01`);
+      return w.key === key ? w : null;
+    }
+    case "quarterly": {
+      const m = /^(\d{4})-Q([1-4])$/.exec(key);
+      if (!m) return null;
+      const sm = (Number(m[2]) - 1) * 3 + 1;
+      const w = calendarWindow("quarterly", `${m[1]}-${pad2(sm)}-01`);
+      return w.key === key ? w : null;
+    }
+    case "semiannual": {
+      const m = /^(\d{4})-H([12])$/.exec(key);
+      if (!m) return null;
+      const sm = Number(m[2]) === 1 ? 1 : 7;
+      const w = calendarWindow("semiannual", `${m[1]}-${pad2(sm)}-01`);
+      return w.key === key ? w : null;
+    }
+    case "annual": {
+      const m = /^(\d{4})$/.exec(key);
+      if (!m) return null;
+      const w = calendarWindow("annual", `${m[1]}-01-01`);
+      return w.key === key ? w : null;
+    }
+  }
 }
 
 /** window.end - today in days. 0 = last usable day. Negative = expired. */
 export function daysRemaining(window: CycleWindow, today: ISODate): number {
-  void window, today;
-  throw new Error("unimplemented (Phase A)");
+  return daysBetween(today, window.end);
 }
 
 /** Warn threshold per constants.WARN_THRESHOLD_DAYS. */
 export function warnThresholdDays(frequency: Frequency): number {
-  void frequency;
-  throw new Error("unimplemented (Phase A)");
+  return WARN_THRESHOLD_DAYS[frequency];
 }
 
 /** today within window AND daysRemaining <= warnThresholdDays(frequency). */
@@ -106,8 +222,9 @@ export function isExpiringSoon(
   frequency: Frequency,
   today: ISODate,
 ): boolean {
-  void window, frequency, today;
-  throw new Error("unimplemented (Phase A)");
+  const withinWindow =
+    cmpDate(today, window.start) >= 0 && cmpDate(today, window.end) <= 0;
+  return withinWindow && daysRemaining(window, today) <= warnThresholdDays(frequency);
 }
 
 /**
@@ -115,8 +232,7 @@ export function isExpiringSoon(
  * render "$X annual fee renews on <window.end + 1 day>" pseudo-items.
  */
 export function feeRenewalCycle(card: CycleCard, today: ISODate): CycleWindow {
-  void card, today;
-  throw new Error("unimplemented (Phase A)");
+  return anniversaryWindow("annual", card, today);
 }
 
 /** row?.used ?? benefit.automatic */
@@ -124,6 +240,5 @@ export function effectiveUsed(
   benefit: Pick<Benefit, "automatic">,
   row: { used: boolean | null } | null | undefined,
 ): boolean {
-  void benefit, row;
-  throw new Error("unimplemented (Phase A)");
+  return row?.used ?? benefit.automatic;
 }
