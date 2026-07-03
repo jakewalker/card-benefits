@@ -80,6 +80,7 @@ app.put("/benefits/:id", async (c) => {
     valueCents: parsed.data.valueCents ?? null,
     frequency: parsed.data.frequency,
     anchor: parsed.data.anchor,
+    category: parsed.data.category,
     automatic: parsed.data.automatic,
     startDate: parsed.data.startDate ?? existing.startDate,
   });

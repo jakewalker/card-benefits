@@ -5,29 +5,44 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiClientError } from "../api";
-import type { DashboardItem, DashboardPayload } from "../../shared/types";
+import type { Category, DashboardItem, DashboardPayload } from "../../shared/types";
+import { CATEGORY_META, CATEGORY_ORDER } from "../../shared/constants";
 import BenefitRow from "../components/BenefitRow";
 import CommentSheet from "../components/CommentSheet";
 
-interface CardGroup {
-  cardId: string;
-  cardName: string;
+interface ItemGroup {
+  key: string;
+  title: string;
   items: DashboardItem[];
 }
 
-function groupByCard(items: DashboardItem[]): CardGroup[] {
+function groupByCard(items: DashboardItem[]): ItemGroup[] {
   const order: string[] = [];
-  const groups: Record<string, CardGroup> = {};
+  const groups: Record<string, ItemGroup> = {};
   for (const item of items) {
     let group = groups[item.cardId];
     if (!group) {
-      group = { cardId: item.cardId, cardName: item.cardName, items: [] };
+      group = { key: item.cardId, title: item.cardName, items: [] };
       groups[item.cardId] = group;
       order.push(item.cardId);
     }
     group.items.push(item);
   }
   return order.map((id) => groups[id]!);
+}
+
+function groupByCategory(items: DashboardItem[]): ItemGroup[] {
+  const byCat = new Map<Category, DashboardItem[]>();
+  for (const item of items) {
+    const list = byCat.get(item.category) ?? [];
+    list.push(item);
+    byCat.set(item.category, list);
+  }
+  return CATEGORY_ORDER.filter((cat) => byCat.has(cat)).map((cat) => ({
+    key: cat,
+    title: `${CATEGORY_META[cat].icon} ${CATEGORY_META[cat].label}`,
+    items: byCat.get(cat)!,
+  }));
 }
 
 function sameItem(a: DashboardItem, b: { benefitId?: string; window: { key: string } }) {
@@ -58,6 +73,14 @@ export default function Dashboard() {
   const [banner, setBanner] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [commentTarget, setCommentTarget] = useState<DashboardItem | null>(null);
+  const [groupBy, setGroupBy] = useState<"card" | "category">(() =>
+    localStorage.getItem("dashboard-group-by") === "category" ? "category" : "card",
+  );
+
+  function changeGroupBy(next: "card" | "category") {
+    setGroupBy(next);
+    localStorage.setItem("dashboard-group-by", next);
+  }
 
   useEffect(() => {
     let alive = true;
@@ -160,7 +183,10 @@ export default function Dashboard() {
     return null;
   }
 
-  const groups = groupByCard(payload.current);
+  const groups =
+    groupBy === "category"
+      ? groupByCategory(payload.current)
+      : groupByCard(payload.current);
 
   return (
     <div className="page">
@@ -183,6 +209,7 @@ export default function Dashboard() {
                 cardName={item.cardName}
                 kind={item.kind}
                 valueCents={item.valueCents}
+                category={item.category}
                 daysRemaining={item.daysRemaining}
                 effectiveUsed={item.effectiveUsed}
                 explicit={item.explicit}
@@ -199,7 +226,25 @@ export default function Dashboard() {
       </section>
 
       <section className="section">
-        <h2 className="section-title">This cycle</h2>
+        <div className="section-title-row">
+          <h2 className="section-title">This cycle</h2>
+          <div className="segmented" role="group" aria-label="Group benefits by">
+            <button
+              type="button"
+              className={groupBy === "card" ? "segment segment-active" : "segment"}
+              onClick={() => changeGroupBy("card")}
+            >
+              By card
+            </button>
+            <button
+              type="button"
+              className={groupBy === "category" ? "segment segment-active" : "segment"}
+              onClick={() => changeGroupBy("category")}
+            >
+              By category
+            </button>
+          </div>
+        </div>
         {groups.length === 0 ? (
           <p className="state-message state-message-inline">
             No active benefits yet.{" "}
@@ -207,15 +252,17 @@ export default function Dashboard() {
           </p>
         ) : (
           groups.map((group) => (
-            <div key={group.cardId} className="card-group">
-              <h3 className="card-group-title">{group.cardName}</h3>
+            <div key={group.key} className="card-group">
+              <h3 className="card-group-title">{group.title}</h3>
               <div className="card-list">
                 {group.items.map((item) => (
                   <BenefitRow
                     key={`${item.benefitId}-${item.window.key}`}
                     name={item.name}
+                    cardName={groupBy === "category" ? item.cardName : undefined}
                     kind={item.kind}
                     valueCents={item.valueCents}
+                    category={groupBy === "card" ? item.category : undefined}
                     daysRemaining={item.daysRemaining}
                     effectiveUsed={item.effectiveUsed}
                     explicit={item.explicit}

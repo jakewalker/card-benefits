@@ -232,6 +232,7 @@ app.post("/cards/:id/benefits", async (c) => {
       valueCents: parsed.data.valueCents ?? null,
       frequency: parsed.data.frequency,
       anchor: parsed.data.anchor,
+      category: parsed.data.category,
       automatic: parsed.data.automatic,
       startDate: parsed.data.startDate ?? today,
     },

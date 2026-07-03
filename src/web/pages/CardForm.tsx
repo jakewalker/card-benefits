@@ -22,6 +22,7 @@ const BLANK_BENEFIT: BenefitDraft = {
   valueCents: null,
   frequency: "monthly",
   anchor: "calendar",
+  category: "other",
   automatic: false,
 };
 

@@ -146,6 +146,43 @@ button {
   margin: 0 0 var(--space-3);
 }
 
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.section-title-row .section-title {
+  margin: 0;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  padding: 2px;
+}
+
+.segment {
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: var(--space-1) var(--space-3);
+  min-height: 32px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.segment-active {
+  background: var(--color-neutral-pill-bg);
+  color: var(--color-text);
+}
+
 .card-group {
   margin-top: var(--space-5);
 }
@@ -397,6 +434,12 @@ button {
 .badge-auto {
   background: var(--color-accent);
   color: #fff;
+}
+
+.badge-category {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 600;
 }
 
 .badge-comment {

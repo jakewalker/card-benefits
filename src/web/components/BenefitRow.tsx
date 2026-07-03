@@ -6,8 +6,9 @@
  * across pages/components, since src/shared is frozen and off-limits here.
  */
 import { useRef } from "react";
-import type { ISODate } from "../../shared/types";
+import type { Category, ISODate } from "../../shared/types";
 import { addDays } from "../../shared/dates";
+import { CATEGORY_META } from "../../shared/constants";
 
 export function formatCents(cents: number | null): string {
   if (cents == null) return "";
@@ -49,6 +50,8 @@ export interface BenefitRowProps {
   cardName?: string;
   kind?: "benefit" | "annual_fee";
   valueCents: number | null;
+  /** When provided, a small category chip is shown ('other' is omitted as noise). */
+  category?: Category;
   daysRemaining: number;
   effectiveUsed: boolean;
   explicit: boolean;
@@ -71,6 +74,7 @@ export default function BenefitRow({
   cardName,
   kind = "benefit",
   valueCents,
+  category,
   daysRemaining,
   effectiveUsed,
   automatic,
@@ -139,6 +143,14 @@ export default function BenefitRow({
       <div className="benefit-row-main">
         <p className="benefit-row-name">
           {name}
+          {category && category !== "other" && (
+            <span
+              className="badge badge-category"
+              title={CATEGORY_META[category].label}
+            >
+              {CATEGORY_META[category].icon} {CATEGORY_META[category].label}
+            </span>
+          )}
           {automatic && <span className="badge badge-auto">auto</span>}
           {comment && (
             <span className="badge badge-comment" title={comment}>

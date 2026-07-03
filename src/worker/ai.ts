@@ -45,6 +45,7 @@ export const PARSED_CARD_JSON_SCHEMA = {
           "value_cents",
           "frequency",
           "anchor",
+          "category",
           "automatic",
           "confidence",
         ],
@@ -57,6 +58,17 @@ export const PARSED_CARD_JSON_SCHEMA = {
             enum: ["monthly", "quarterly", "semiannual", "annual"],
           },
           anchor: { type: "string", enum: ["calendar", "anniversary"] },
+          category: {
+            type: "string",
+            enum: [
+              "dining",
+              "hotels",
+              "travel",
+              "shopping",
+              "entertainment",
+              "other",
+            ],
+          },
           automatic: { type: "boolean" },
           confidence: { type: "string", enum: ["high", "medium", "low"] },
         },
@@ -87,6 +99,13 @@ BENEFITS (array) — one entry per RECURRING benefit only:
 - anchor: how the cycle is anchored:
     - "calendar" when it resets on calendar boundaries — calendar month / quarter / half-year / year. Phrases like "each calendar year", "January through June", "semi-annually (Jan-Jun, Jul-Dec)", "per calendar quarter".
     - "anniversary" when it resets on the cardmember/membership year — "each cardmember year", "membership year", "each year of card membership". This is the most common pattern for annual travel credits, so prefer it for annual credits unless the text clearly says "calendar year".
+- category: what the benefit is spent on — one of:
+    - "dining": restaurant, food-delivery, and dining-program credits (Resy, Grubhub, Uber Eats-style credits).
+    - "hotels": hotel credits and hotel-program benefits (FHR/THC credits, hotel brand credits, free-night awards).
+    - "travel": flights, airline fees, general travel credits, rideshare, TSA PreCheck/Global Entry/CLEAR.
+    - "shopping": retail credits (Saks, Amazon-style shopping credits).
+    - "entertainment": streaming/digital entertainment, event/ticket credits.
+    - "other": anything that doesn't clearly fit (wellness, phone credits, memberships, etc.).
 - automatic: true ONLY for benefits that post as statement credits with NO action needed (e.g. an anniversary bonus or credit that simply appears on the statement). If the cardholder must enroll, use a specific merchant, or make a qualifying purchase to trigger the credit, set false.
 - confidence:
     - "high" when frequency/anchor/value are explicitly stated in the text.

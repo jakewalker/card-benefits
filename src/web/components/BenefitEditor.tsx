@@ -5,7 +5,8 @@
  * Owned by Phase D (implementation). Props below are the CONTRACT.
  */
 import { useState } from "react";
-import type { BenefitInput, Frequency, Anchor } from "../../shared/types";
+import type { BenefitInput, Frequency, Anchor, Category } from "../../shared/types";
+import { CATEGORY_META, CATEGORY_ORDER } from "../../shared/constants";
 
 /** BenefitInput plus optional AI-confidence for highlight styling. */
 export interface BenefitDraft extends BenefitInput {
@@ -128,18 +129,34 @@ export default function BenefitEditor({
         </div>
       </div>
 
-      <div className="field">
-        <label>Resets on</label>
-        <select
-          value={value.anchor}
-          onChange={(e) => patch({ anchor: e.target.value as Anchor })}
-        >
-          {ANCHOR_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+      <div className="field-row">
+        <div className="field">
+          <label>Resets on</label>
+          <select
+            value={value.anchor}
+            onChange={(e) => patch({ anchor: e.target.value as Anchor })}
+          >
+            {ANCHOR_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Category</label>
+          <select
+            value={value.category}
+            onChange={(e) => patch({ category: e.target.value as Category })}
+          >
+            {CATEGORY_ORDER.map((cat) => (
+              <option key={cat} value={cat}>
+                {CATEGORY_META[cat].icon} {CATEGORY_META[cat].label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="field field-checkbox">

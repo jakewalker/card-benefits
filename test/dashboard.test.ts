@@ -30,6 +30,7 @@ function mkBenefit(
     valueCents: null,
     frequency: "monthly" as Frequency,
     anchor: "calendar" as Anchor,
+    category: "other" as const,
     automatic: false,
     active: true,
     startDate: "2020-01-01",

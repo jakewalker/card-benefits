@@ -15,6 +15,7 @@ import type {
   Anchor,
   Benefit,
   Card,
+  Category,
   Frequency,
   ImportPayload,
   ISODate,
@@ -45,6 +46,7 @@ interface BenefitRowDb {
   value_cents: number | null;
   frequency: string;
   anchor: string;
+  category: string;
   automatic: number;
   active: number;
   start_date: string;
@@ -87,6 +89,7 @@ export function benefitFromRow(row: BenefitRowDb): Benefit {
     valueCents: row.value_cents,
     frequency: row.frequency as Frequency,
     anchor: row.anchor as Anchor,
+    category: row.category as Category,
     automatic: row.automatic === 1,
     active: row.active === 1,
     startDate: row.start_date,
@@ -233,6 +236,7 @@ export interface BenefitWriteFields {
   valueCents: number | null;
   frequency: Frequency;
   anchor: Anchor;
+  category: Category;
   automatic: boolean;
   startDate: ISODate;
 }
@@ -297,8 +301,8 @@ export async function insertBenefit(
   const id = crypto.randomUUID();
   const row = await db
     .prepare(
-      `INSERT INTO benefits (id, card_id, name, description, value_cents, frequency, anchor, automatic, active, start_date, deactivated_at, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NULL, ?)
+      `INSERT INTO benefits (id, card_id, name, description, value_cents, frequency, anchor, category, automatic, active, start_date, deactivated_at, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NULL, ?)
        RETURNING *`,
     )
     .bind(
@@ -309,6 +313,7 @@ export async function insertBenefit(
       fields.valueCents,
       fields.frequency,
       fields.anchor,
+      fields.category,
       fields.automatic ? 1 : 0,
       fields.startDate,
       now,
@@ -326,7 +331,7 @@ export async function updateBenefitRow(
   const row = await db
     .prepare(
       `UPDATE benefits
-       SET name = ?, description = ?, value_cents = ?, frequency = ?, anchor = ?, automatic = ?, start_date = ?
+       SET name = ?, description = ?, value_cents = ?, frequency = ?, anchor = ?, category = ?, automatic = ?, start_date = ?
        WHERE id = ?
        RETURNING *`,
     )
@@ -336,6 +341,7 @@ export async function updateBenefitRow(
       fields.valueCents,
       fields.frequency,
       fields.anchor,
+      fields.category,
       fields.automatic ? 1 : 0,
       fields.startDate,
       id,
@@ -495,6 +501,7 @@ export async function importCardWithBenefits(
     valueCents: b.valueCents ?? null,
     frequency: b.frequency,
     anchor: b.anchor,
+    category: b.category,
     automatic: b.automatic,
     active: true,
     startDate: b.startDate ?? today,
@@ -519,8 +526,8 @@ export async function importCardWithBenefits(
     ...benefits.map((b) =>
       db
         .prepare(
-          `INSERT INTO benefits (id, card_id, name, description, value_cents, frequency, anchor, automatic, active, start_date, deactivated_at, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NULL, ?)`,
+          `INSERT INTO benefits (id, card_id, name, description, value_cents, frequency, anchor, category, automatic, active, start_date, deactivated_at, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NULL, ?)`,
         )
         .bind(
           b.id,
@@ -530,6 +537,7 @@ export async function importCardWithBenefits(
           b.valueCents,
           b.frequency,
           b.anchor,
+          b.category,
           b.automatic ? 1 : 0,
           b.startDate,
           b.createdAt,

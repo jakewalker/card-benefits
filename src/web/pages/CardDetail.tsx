@@ -22,6 +22,7 @@ const BLANK_DRAFT: BenefitDraft = {
   valueCents: null,
   frequency: "monthly",
   anchor: "calendar",
+  category: "other",
   automatic: false,
 };
 
@@ -37,6 +38,7 @@ function draftFromBenefit(b: BenefitWithStatus): BenefitDraft {
     valueCents: b.valueCents,
     frequency: b.frequency,
     anchor: b.anchor,
+    category: b.category,
     automatic: b.automatic,
     startDate: b.startDate,
   };

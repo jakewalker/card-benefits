@@ -38,6 +38,7 @@ function toDraft(b: ParsedCardPayload["benefits"][number]): BenefitDraft {
     valueCents: b.value_cents,
     frequency: b.frequency,
     anchor: b.anchor,
+    category: b.category,
     automatic: b.automatic,
     confidence: b.confidence,
   };
@@ -50,6 +51,7 @@ function emptyDraft(): BenefitDraft {
     valueCents: null,
     frequency: "annual",
     anchor: "anniversary",
+    category: "other",
     automatic: false,
   };
 }
@@ -108,6 +110,7 @@ export default function ParseReview({
         valueCents: b.valueCents ?? null,
         frequency: b.frequency,
         anchor: b.anchor,
+        category: b.category,
         automatic: b.automatic,
       })),
     };

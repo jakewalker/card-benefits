@@ -35,6 +35,17 @@ export type Frequency = z.infer<typeof frequencySchema>;
 export const anchorSchema = z.enum(["calendar", "anniversary"]);
 export type Anchor = z.infer<typeof anchorSchema>;
 
+/** Display grouping for benefits. Labels/icons live in constants.CATEGORY_META. */
+export const categorySchema = z.enum([
+  "dining",
+  "hotels",
+  "travel",
+  "shopping",
+  "entertainment",
+  "other",
+]);
+export type Category = z.infer<typeof categorySchema>;
+
 /** One benefit cycle. `end` is INCLUSIVE (the last day the benefit is usable). */
 export interface CycleWindow {
   key: string;
@@ -66,6 +77,7 @@ export interface Benefit {
   valueCents: number | null;
   frequency: Frequency;
   anchor: Anchor;
+  category: Category;
   /** true = posts automatically; treated as used unless explicitly unchecked. */
   automatic: boolean;
   active: boolean;
@@ -103,6 +115,7 @@ export const benefitInputSchema = z.object({
   valueCents: z.number().int().min(0).nullish(),
   frequency: frequencySchema,
   anchor: anchorSchema,
+  category: categorySchema.default("other"),
   automatic: z.boolean().default(false),
   /** Optional; server defaults to today (app TZ). */
   startDate: isoDateSchema.optional(),
@@ -142,6 +155,7 @@ export const parsedBenefitSchema = z.object({
   value_cents: z.number().int().nullable(),
   frequency: frequencySchema,
   anchor: anchorSchema,
+  category: categorySchema,
   automatic: z.boolean(),
   confidence: z.enum(["high", "medium", "low"]),
 });
@@ -217,6 +231,8 @@ export interface DashboardItem {
   name: string;
   /** For annual_fee items this is the fee amount. */
   valueCents: number | null;
+  /** 'other' for annual_fee items. */
+  category: Category;
   window: CycleWindow;
   daysRemaining: number;
   effectiveUsed: boolean;
