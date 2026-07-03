@@ -67,10 +67,26 @@ export default function BenefitEditor({
 
   return (
     <div className={`benefit-editor${showBadge ? ` confidence-${confidence}` : ""}`}>
-      {showBadge && (
-        <span className={`confidence-badge confidence-${confidence}`}>
-          {confidence} confidence — check this
-        </span>
+      {(showBadge || onRemove) && (
+        <div className="benefit-editor-header">
+          {showBadge ? (
+            <span className={`confidence-badge confidence-${confidence}`}>
+              {confidence} confidence — check this
+            </span>
+          ) : (
+            <span />
+          )}
+          {onRemove && (
+            <button
+              type="button"
+              className="btn-icon benefit-editor-remove"
+              aria-label="Remove benefit"
+              onClick={onRemove}
+            >
+              ✕
+            </button>
+          )}
+        </div>
       )}
 
       <div className="field">
@@ -83,31 +99,33 @@ export default function BenefitEditor({
         />
       </div>
 
-      <div className="field">
-        <label>Value (dollars)</label>
-        <input
-          type="number"
-          inputMode="decimal"
-          min="0"
-          step="0.01"
-          value={dollars}
-          placeholder="optional"
-          onChange={(e) => onDollarsChange(e.target.value)}
-        />
-      </div>
+      <div className="field-row">
+        <div className="field">
+          <label>Value (dollars)</label>
+          <input
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="0.01"
+            value={dollars}
+            placeholder="optional"
+            onChange={(e) => onDollarsChange(e.target.value)}
+          />
+        </div>
 
-      <div className="field">
-        <label>Frequency</label>
-        <select
-          value={value.frequency}
-          onChange={(e) => patch({ frequency: e.target.value as Frequency })}
-        >
-          {FREQUENCY_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        <div className="field">
+          <label>Frequency</label>
+          <select
+            value={value.frequency}
+            onChange={(e) => patch({ frequency: e.target.value as Frequency })}
+          >
+            {FREQUENCY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="field">
@@ -131,9 +149,11 @@ export default function BenefitEditor({
             checked={value.automatic}
             onChange={(e) => patch({ automatic: e.target.checked })}
           />
-          Automatic
+          <span>
+            Automatic
+            <span className="hint">posts automatically — auto-checked each cycle</span>
+          </span>
         </label>
-        <span className="hint">posts automatically — auto-checked each cycle</span>
       </div>
 
       <div className="field">
@@ -147,12 +167,6 @@ export default function BenefitEditor({
           }
         />
       </div>
-
-      {onRemove && (
-        <button type="button" className="btn btn-remove" onClick={onRemove}>
-          Remove
-        </button>
-      )}
     </div>
   );
 }

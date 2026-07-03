@@ -133,9 +133,13 @@ export default function ParseReview({
   return (
     <div className="parse-review">
       {initial.notes && (
-        <div className="info-box parse-notes">{initial.notes}</div>
+        <div className="info-box parse-notes">
+          <span className="info-box-label">From the AI parse</span>
+          {initial.notes}
+        </div>
       )}
 
+      <h3 className="form-section-title">Card</h3>
       <section className="card-fields">
         <div className="field">
           <label>Card name</label>
@@ -182,6 +186,12 @@ export default function ParseReview({
         </div>
       </section>
 
+      <h3 className="form-section-title">
+        Benefits
+        {benefits.length > 0 && (
+          <span className="form-section-count">{benefits.length}</span>
+        )}
+      </h3>
       <section className="benefits-list">
         {benefits.map((b, i) => (
           <BenefitEditor

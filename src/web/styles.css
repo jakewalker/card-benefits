@@ -524,25 +524,88 @@ button {
   gap: var(--space-4);
 }
 
+/* Two markup shapes exist: <label class="field">Text<input/></label> and
+   <div class="field"><label>Text</label><input/></div>. The label look is set
+   on the container / inner label; inputs reset it back to normal text. */
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  font-size: 0.9rem;
+  gap: var(--space-1);
+  min-width: 0;
+  font-size: 0.78rem;
   font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.field > label {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+}
+
+/* Two short fields side by side (collapses on very narrow screens). */
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+@media (max-width: 360px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hint {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.field-checkbox > label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.field-checkbox input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  min-height: unset;
+  margin-top: 1px;
+  flex-shrink: 0;
+  accent-color: var(--color-accent);
 }
 
 .field input,
 .field select,
 .field textarea {
-  font: inherit;
+  font-family: var(--font-sans);
+  font-size: 1rem;
   font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
   min-height: var(--tap-min);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
+  margin-top: var(--space-1);
 }
 
 .field textarea {
@@ -578,6 +641,150 @@ button {
 .tab-button-active {
   color: var(--color-accent);
   border-bottom-color: var(--color-accent);
+}
+
+/* ------------------------------------------------------------------ */
+/* Parse review & benefit editor */
+/* ------------------------------------------------------------------ */
+
+.form-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: var(--space-5) 0 var(--space-3);
+}
+
+.form-section-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 1px var(--space-2);
+  border-radius: 999px;
+  background: var(--color-neutral-pill-bg);
+  color: var(--color-neutral-pill-text);
+}
+
+.parse-review .card-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.benefits-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.benefit-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.benefit-editor.confidence-medium {
+  border-color: var(--color-warn-border);
+  box-shadow: inset 3px 0 0 var(--color-warn-border), var(--shadow-sm);
+}
+
+.benefit-editor.confidence-low {
+  border-color: var(--color-red-text);
+  box-shadow: inset 3px 0 0 var(--color-red-text), var(--shadow-sm);
+}
+
+.benefit-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0;
+}
+
+.benefit-editor-remove {
+  font-size: 1rem;
+}
+
+.confidence-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 999px;
+  align-self: flex-start;
+}
+
+.confidence-badge.confidence-medium {
+  background: var(--color-warn-bg);
+  color: var(--color-warn-text);
+}
+
+.confidence-badge.confidence-low {
+  background: var(--color-red-bg);
+  color: var(--color-red-text);
+}
+
+.info-box {
+  background: var(--color-neutral-pill-bg);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  font-size: 0.9rem;
+  color: var(--color-text);
+  margin-bottom: var(--space-4);
+}
+
+.info-box-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.error-box {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  font-size: 0.9rem;
+  margin: var(--space-4) 0 0;
+}
+
+.btn-add {
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-muted);
+  width: 100%;
+}
+
+.btn-add:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.parse-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.parse-actions .btn-primary {
+  flex: 1;
 }
 
 /* ------------------------------------------------------------------ */
