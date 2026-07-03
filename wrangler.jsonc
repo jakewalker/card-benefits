@@ -3,6 +3,8 @@
   "name": "card-benefits",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-06-01",
+  // @anthropic-ai/sdk imports node: built-ins; nodejs_compat provides them.
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "not_found_handling": "single-page-application"
   },
