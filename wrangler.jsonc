@@ -8,6 +8,10 @@
   "assets": {
     "not_found_handling": "single-page-application"
   },
+  // jakewalker.com's zone is on Cloudflare; wrangler provisions the DNS
+  // record + cert for this subdomain automatically on deploy.
+  "routes": [{ "pattern": "cards.jakewalker.com", "custom_domain": true }],
+  "workers_dev": false,
   "d1_databases": [
     {
       "binding": "DB",
