@@ -820,6 +820,23 @@ button {
   color: var(--color-accent);
 }
 
+.parse-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  background: var(--color-neutral-pill-bg);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.parse-stepper-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
 .parse-actions {
   display: flex;
   gap: var(--space-3);

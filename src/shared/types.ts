@@ -175,8 +175,17 @@ export const parsedCardPayloadSchema = z.object({
 });
 export type ParsedCardPayload = z.infer<typeof parsedCardPayloadSchema>;
 
+/**
+ * What POST /api/parse actually returns: one entry per card found in the text.
+ * A single-card description yields a one-element array.
+ */
+export const parsedCardsPayloadSchema = z.object({
+  cards: z.array(parsedCardPayloadSchema).min(1),
+});
+export type ParsedCardsPayload = z.infer<typeof parsedCardsPayloadSchema>;
+
 export const parseRequestSchema = z.object({
-  text: z.string().min(1).max(20_000),
+  text: z.string().min(1).max(40_000),
 });
 export type ParseRequest = z.infer<typeof parseRequestSchema>;
 

@@ -26,7 +26,7 @@ import type {
   HistoryPayload,
   ISODate,
   ImportPayload,
-  ParsedCardPayload,
+  ParsedCardsPayload,
   UsageRow,
   UsageUpdate,
 } from "../shared/types";
@@ -88,7 +88,7 @@ export interface ApiClient {
     update: UsageUpdate,
   ): Promise<UsageRow>;
   getHistory(benefitId: string, limit?: number): Promise<HistoryPayload>;
-  parseText(text: string): Promise<ParsedCardPayload>;
+  parseText(text: string): Promise<ParsedCardsPayload>;
   importCard(payload: ImportPayload): Promise<{ card: Card; benefits: Benefit[] }>;
   login(password: string): Promise<void>;
 }
@@ -607,9 +607,9 @@ const mockApi: ApiClient = {
   async parseText(text) {
     ensureSeeded();
     await latency(900, 1700);
-    return {
+    const entry = (name: string) => ({
       card: {
-        name: "New Card",
+        name,
         issuer: null,
         annual_fee_cents: null,
         anniversary_date: null,
@@ -619,15 +619,20 @@ const mockApi: ApiClient = {
           name: "Sample Credit",
           description: text.trim().slice(0, 140) || "Parsed from your description.",
           value_cents: 10_000,
-          frequency: "quarterly",
-          category: "dining",
-          anchor: "calendar",
+          frequency: "quarterly" as const,
+          category: "dining" as const,
+          anchor: "calendar" as const,
           automatic: false,
-          confidence: "medium",
+          confidence: "medium" as const,
         },
       ],
       notes:
         "Mock parse result — connect the Worker (unset VITE_USE_MOCK) for real AI parsing.",
+    });
+    // Crude multi-card mock: one entry per "## " heading, else a single card.
+    const headings = [...text.matchAll(/^##\s+(.+)$/gm)].map((m) => m[1]!.trim());
+    return {
+      cards: headings.length >= 2 ? headings.map(entry) : [entry("New Card")],
     };
   },
 

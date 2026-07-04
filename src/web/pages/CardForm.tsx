@@ -11,7 +11,7 @@ import type {
   Card,
   CardInput,
   ImportPayload,
-  ParsedCardPayload,
+  ParsedCardsPayload,
 } from "../../shared/types";
 import ParseReview from "../components/ParseReview";
 import BenefitEditor, { type BenefitDraft } from "../components/BenefitEditor";
@@ -80,7 +80,9 @@ export default function CardForm() {
   const [describeText, setDescribeText] = useState("");
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
-  const [parsed, setParsed] = useState<ParsedCardPayload | null>(null);
+  const [parsed, setParsed] = useState<ParsedCardsPayload | null>(null);
+  const [parseIndex, setParseIndex] = useState(0);
+  const [importedIds, setImportedIds] = useState<string[]>([]);
   const [manualBenefits, setManualBenefits] = useState<BenefitDraft[]>([BLANK_BENEFIT]);
 
   useEffect(() => {
@@ -125,6 +127,8 @@ export default function CardForm() {
     try {
       const result = await api.parseText(describeText);
       setParsed(result);
+      setParseIndex(0);
+      setImportedIds([]);
     } catch (err) {
       setParseError(err instanceof ApiClientError ? err.body.error : "Couldn't parse that text.");
     } finally {
@@ -132,9 +136,37 @@ export default function CardForm() {
     }
   }
 
+  /** After importing/skipping card `i`, move on — or leave when it was the last. */
+  function advanceParse(nextImportedIds: string[]) {
+    const total = parsed?.cards.length ?? 0;
+    if (parseIndex + 1 < total) {
+      setImportedIds(nextImportedIds);
+      setParseIndex(parseIndex + 1);
+      return;
+    }
+    // Done with every card.
+    if (nextImportedIds.length === 1) {
+      navigate(`/cards/${nextImportedIds[0]}`);
+    } else if (nextImportedIds.length > 1) {
+      navigate("/cards");
+    } else {
+      setParsed(null); // nothing imported — back to the textarea
+    }
+  }
+
   async function handleImport(payload: ImportPayload) {
     const result = await api.importCard(payload);
-    navigate(`/cards/${result.card.id}`);
+    advanceParse([...importedIds, result.card.id]);
+  }
+
+  function handleSkip() {
+    advanceParse(importedIds);
+  }
+
+  function handleCancelParse() {
+    setParsed(null);
+    setParseIndex(0);
+    setImportedIds([]);
   }
 
   async function handleManualSubmit(e: FormEvent) {
@@ -205,16 +237,42 @@ export default function CardForm() {
 
       {tab === "describe" ? (
         parsed ? (
-          <ParseReview initial={parsed} onImport={handleImport} onCancel={() => setParsed(null)} />
+          <>
+            {parsed.cards.length > 1 && (
+              <div className="parse-stepper">
+                <span className="parse-stepper-label">
+                  Card {parseIndex + 1} of {parsed.cards.length}
+                  {parsed.cards[parseIndex]?.card.name
+                    ? ` — ${parsed.cards[parseIndex]!.card.name}`
+                    : ""}
+                </span>
+                <button type="button" className="btn-link" onClick={handleSkip}>
+                  Skip this card
+                </button>
+              </div>
+            )}
+            {/* key forces a fresh ParseReview per card (it seeds state from `initial`) */}
+            <ParseReview
+              key={parseIndex}
+              initial={parsed.cards[parseIndex]!}
+              onImport={handleImport}
+              onCancel={handleCancelParse}
+            />
+          </>
         ) : (
           <form className="form" onSubmit={handleParse}>
             <label className="field">
-              <span>Describe the card and its benefits</span>
+              <span>Describe the card(s) and their benefits</span>
               <textarea
                 value={describeText}
                 onChange={(e) => setDescribeText(e.target.value)}
                 rows={10}
-                placeholder="Paste the benefits page, or describe it in your own words…"
+                placeholder={
+                  "Paste the benefits page, or describe it in your own words…\n\n" +
+                  "Several cards at once works too — separate them with headings:\n" +
+                  "# Amex\n## Platinum\n$200 airline credit each calendar year…\n" +
+                  "## Gold\n$10 monthly dining credit…\n# Chase\n## Sapphire Reserve\n…"
+                }
                 required
               />
             </label>

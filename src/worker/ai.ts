@@ -8,17 +8,18 @@
  */
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  parsedCardPayloadSchema,
-  type ParsedCardPayload,
+  parsedCardsPayloadSchema,
+  type ParsedCardsPayload,
 } from "../shared/types";
 
 /**
- * The JSON schema handed to the model. It is the exact structural twin of
- * `parsedCardPayloadSchema` in src/shared/types.ts. Structured-outputs rules:
+ * The JSON schema handed to the model. `properties.cards.items` is the exact
+ * structural twin of `parsedCardPayloadSchema` in src/shared/types.ts (the
+ * whole thing mirrors `parsedCardsPayloadSchema`). Structured-outputs rules:
  * `additionalProperties: false` everywhere, every property listed in
  * `required`, and no min/max constraints.
  */
-export const PARSED_CARD_JSON_SCHEMA = {
+const PARSED_CARD_ENTRY_SCHEMA = {
   type: "object",
   additionalProperties: false,
   required: ["card", "benefits", "notes"],
@@ -78,12 +79,23 @@ export const PARSED_CARD_JSON_SCHEMA = {
   },
 } as const;
 
+export const PARSED_CARDS_JSON_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["cards"],
+  properties: {
+    cards: { type: "array", items: PARSED_CARD_ENTRY_SCHEMA },
+  },
+} as const;
+
 function systemPrompt(today: string): string {
-  return `You are an expert at reading US credit-card benefit descriptions and extracting a card and its RECURRING benefits into a structured schema.
+  return `You are an expert at reading US credit-card benefit descriptions and extracting cards and their RECURRING benefits into a structured schema.
 
 Today's date is ${today}; use it for any relative-date reasoning.
 
-Extract into the schema:
+The text may describe ONE card or SEVERAL. Return one entry in "cards" per distinct credit card. Markdown headings are a common convention — e.g. "# Amex" (an issuer) containing "## Platinum" and "## Gold" (two cards) — but any clear separation counts. When an issuer heading wraps several card headings, apply that issuer to each of those cards. Never merge different cards' benefits, and never split one card into two.
+
+For EACH card, extract into its entry:
 
 CARD
 - name: the card's name.
@@ -118,11 +130,12 @@ RULES
 - Convert all dollar amounts to integer cents.
 
 NOTES
-- "notes": a short string surfacing caveats, ambiguities, one-time bonuses, or anything the user should double-check. null if there is nothing to add.`;
+- "notes": a short per-card string surfacing caveats, ambiguities, one-time bonuses, or anything the user should double-check for THAT card. null if there is nothing to add.`;
 }
 
 /**
- * Call Claude to parse a card description into structured data.
+ * Call Claude to parse a description of one or more cards into structured
+ * data (one `cards` entry per card found).
  * @param apiKey  Anthropic API key (from the Worker secret).
  * @param text    The user's plain-English card/benefit description.
  * @param today   Today's date 'YYYY-MM-DD' in the app timezone, for context.
@@ -131,19 +144,23 @@ export async function parseCardDescription(
   apiKey: string,
   text: string,
   today: string,
-): Promise<ParsedCardPayload> {
+): Promise<ParsedCardsPayload> {
   const client = new Anthropic({ apiKey });
 
-  const message = await client.messages.create({
+  // Streamed under the hood (required by the SDK at this max_tokens — large
+  // multi-card outputs would otherwise risk HTTP timeouts); we only consume
+  // the final message.
+  const stream = client.messages.stream({
     model: "claude-opus-4-8",
-    max_tokens: 16000,
+    max_tokens: 32000,
     thinking: { type: "adaptive" },
     output_config: {
-      format: { type: "json_schema", schema: PARSED_CARD_JSON_SCHEMA },
+      format: { type: "json_schema", schema: PARSED_CARDS_JSON_SCHEMA },
     },
     system: systemPrompt(today),
     messages: [{ role: "user", content: text }],
   });
+  const message = await stream.finalMessage();
 
   const textBlock = message.content.find((block) => block.type === "text");
   if (!textBlock || textBlock.type !== "text") {
@@ -153,5 +170,5 @@ export async function parseCardDescription(
   }
 
   const parsed: unknown = JSON.parse(textBlock.text);
-  return parsedCardPayloadSchema.parse(parsed);
+  return parsedCardsPayloadSchema.parse(parsed);
 }
