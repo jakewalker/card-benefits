@@ -52,9 +52,12 @@ function groupByCategory(items: DashboardItem[]): ItemGroup[] {
 
 function sortByExpiration(items: DashboardItem[]): ItemGroup[] {
   if (items.length === 0) return [];
-  return [
-    { key: "expiration", title: null, items: [...items].sort(compareByExpiration) },
-  ];
+  // Checked-off benefits sink to the bottom so the list reads as a todo.
+  const sorted = [...items].sort(
+    (a, b) =>
+      Number(a.effectiveUsed) - Number(b.effectiveUsed) || compareByExpiration(a, b),
+  );
+  return [{ key: "expiration", title: null, items: sorted }];
 }
 
 function sameItem(a: DashboardItem, b: { benefitId?: string; window: { key: string } }) {
