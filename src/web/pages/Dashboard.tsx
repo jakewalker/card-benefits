@@ -1,18 +1,23 @@
 /**
  * Dashboard — "Expiring soon" (urgency-sorted, as delivered by the server)
- * and "This cycle" (grouped by card) with optimistic tap-to-check.
+ * and "This cycle" (grouped by card/category, or flat sorted by expiration)
+ * with optimistic tap-to-check.
  */
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiClientError } from "../api";
 import type { Category, DashboardItem, DashboardPayload } from "../../shared/types";
 import { CATEGORY_META, CATEGORY_ORDER } from "../../shared/constants";
+import { compareByExpiration } from "../../shared/dashboard";
 import BenefitRow from "../components/BenefitRow";
 import CommentSheet from "../components/CommentSheet";
 
+type GroupBy = "card" | "category" | "expiration";
+
 interface ItemGroup {
   key: string;
-  title: string;
+  /** null = flat list, no group heading. */
+  title: string | null;
   items: DashboardItem[];
 }
 
@@ -45,6 +50,13 @@ function groupByCategory(items: DashboardItem[]): ItemGroup[] {
   }));
 }
 
+function sortByExpiration(items: DashboardItem[]): ItemGroup[] {
+  if (items.length === 0) return [];
+  return [
+    { key: "expiration", title: null, items: [...items].sort(compareByExpiration) },
+  ];
+}
+
 function sameItem(a: DashboardItem, b: { benefitId?: string; window: { key: string } }) {
   return a.kind === "benefit" && a.benefitId === b.benefitId && a.window.key === b.window.key;
 }
@@ -73,11 +85,12 @@ export default function Dashboard() {
   const [banner, setBanner] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [commentTarget, setCommentTarget] = useState<DashboardItem | null>(null);
-  const [groupBy, setGroupBy] = useState<"card" | "category">(() =>
-    localStorage.getItem("dashboard-group-by") === "category" ? "category" : "card",
-  );
+  const [groupBy, setGroupBy] = useState<GroupBy>(() => {
+    const stored = localStorage.getItem("dashboard-group-by");
+    return stored === "category" || stored === "expiration" ? stored : "card";
+  });
 
-  function changeGroupBy(next: "card" | "category") {
+  function changeGroupBy(next: GroupBy) {
     setGroupBy(next);
     localStorage.setItem("dashboard-group-by", next);
   }
@@ -186,7 +199,9 @@ export default function Dashboard() {
   const groups =
     groupBy === "category"
       ? groupByCategory(payload.current)
-      : groupByCard(payload.current);
+      : groupBy === "expiration"
+        ? sortByExpiration(payload.current)
+        : groupByCard(payload.current);
 
   return (
     <div className="page">
@@ -243,6 +258,13 @@ export default function Dashboard() {
             >
               By category
             </button>
+            <button
+              type="button"
+              className={groupBy === "expiration" ? "segment segment-active" : "segment"}
+              onClick={() => changeGroupBy("expiration")}
+            >
+              Expiring
+            </button>
           </div>
         </div>
         {groups.length === 0 ? (
@@ -253,16 +275,18 @@ export default function Dashboard() {
         ) : (
           groups.map((group) => (
             <div key={group.key} className="card-group">
-              <h3 className="card-group-title">{group.title}</h3>
+              {group.title !== null && (
+                <h3 className="card-group-title">{group.title}</h3>
+              )}
               <div className="card-list">
                 {group.items.map((item) => (
                   <BenefitRow
                     key={`${item.benefitId}-${item.window.key}`}
                     name={item.name}
-                    cardName={groupBy === "category" ? item.cardName : undefined}
+                    cardName={groupBy !== "card" ? item.cardName : undefined}
                     kind={item.kind}
                     valueCents={item.valueCents}
-                    category={groupBy === "card" ? item.category : undefined}
+                    category={groupBy !== "category" ? item.category : undefined}
                     daysRemaining={item.daysRemaining}
                     effectiveUsed={item.effectiveUsed}
                     explicit={item.explicit}
