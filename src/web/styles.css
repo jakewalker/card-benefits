@@ -119,7 +119,10 @@ button {
 .page {
   max-width: 640px;
   margin: 0 auto;
-  padding: var(--space-5) var(--space-4) var(--space-6);
+  /* Top inset: standalone PWA draws under the iOS status bar
+     (viewport-fit=cover + black-translucent). */
+  padding: calc(var(--space-5) + env(safe-area-inset-top, 0px)) var(--space-4)
+    var(--space-6);
 }
 
 .page-header-row {
