@@ -110,7 +110,7 @@ BENEFITS (array) — one entry per RECURRING benefit only:
 - frequency: how often the benefit RESETS — one of monthly, quarterly, semiannual, annual.
 - anchor: how the cycle is anchored:
     - "calendar" when it resets on calendar boundaries — calendar month / quarter / half-year / year. Phrases like "each calendar year", "January through June", "semi-annually (Jan-Jun, Jul-Dec)", "per calendar quarter".
-    - "anniversary" when it resets on the cardmember/membership year — "each cardmember year", "membership year", "each year of card membership". This is the most common pattern for annual travel credits, so prefer it for annual credits unless the text clearly says "calendar year".
+    - "anniversary" ONLY when the text explicitly ties the reset to the cardmember/membership year — "each cardmember year", "membership year", "each year of card membership". When the text doesn't specify, default to "calendar": the large majority of benefits reset on calendar boundaries.
 - category: what the benefit is spent on — one of:
     - "dining": restaurant, food-delivery, and dining-program credits (Resy, Grubhub, Uber Eats-style credits).
     - "hotels": hotel credits and hotel-program benefits (FHR/THC credits, hotel brand credits, free-night awards).

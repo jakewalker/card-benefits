@@ -50,7 +50,7 @@ function emptyDraft(): BenefitDraft {
     description: null,
     valueCents: null,
     frequency: "annual",
-    anchor: "anniversary",
+    anchor: "calendar",
     category: "other",
     automatic: false,
   };
