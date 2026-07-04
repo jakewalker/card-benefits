@@ -108,6 +108,7 @@ export default function BenefitRow({
             {formatCents(valueCents)} annual fee renews{" "}
             {windowEnd ? formatDate(addDays(windowEnd, 1)) : "soon"}
           </p>
+          {cardName && <p className="benefit-row-subtitle">{cardName}</p>}
         </div>
         <span className={pillClass(daysRemaining)}>{daysLeftLabel(daysRemaining)}</span>
       </div>
