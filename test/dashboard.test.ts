@@ -67,8 +67,14 @@ const cardA = mkCard({
 });
 // Card B: closed — everything on it must be excluded.
 const cardB = mkCard({ id: "B", name: "Bravo", status: "closed" });
-// Card C: active, no fee (annualFeeCents 0) — must NOT produce a fee item.
-const cardC = mkCard({ id: "C", name: "Charlie", annualFeeCents: 0 });
+// Card C: active, no fee (annualFeeCents 0). Still produces a renewal row so
+// $0 cards get a reminder; its Nov anniversary keeps it out of expiringSoon.
+const cardC = mkCard({
+  id: "C",
+  name: "Charlie",
+  annualFeeCents: 0,
+  anniversaryDate: "2020-11-15",
+});
 
 const benefits: Benefit[] = [
   mkBenefit({ id: "b1", cardId: "A", name: "Uber Cash", valueCents: 1500 }),
@@ -131,8 +137,9 @@ describe("computeDashboard: current", () => {
 });
 
 describe("computeDashboard: feeRenewals", () => {
-  it("one per active card with fee > 0 (0-fee and closed cards excluded)", () => {
-    expect(dash.feeRenewals).toHaveLength(1);
+  it("one per active card incl. $0-fee cards (closed cards excluded)", () => {
+    // A (fee) + C ($0 fee); B is closed. Sorted by daysRemaining asc.
+    expect(dash.feeRenewals.map((f) => f.cardId)).toEqual(["A", "C"]);
     const fee = dash.feeRenewals[0]!;
     expect(fee).toMatchObject({
       kind: "annual_fee",
@@ -147,6 +154,27 @@ describe("computeDashboard: feeRenewals", () => {
     expect(fee.window.end).toBe("2026-07-29");
     expect(fee.daysRemaining).toBe(1);
     expect(fee.benefitId).toBeUndefined();
+  });
+
+  it("a $0-fee card still gets a renewal row (valueCents 0)", () => {
+    const c = dash.feeRenewals.find((f) => f.cardId === "C")!;
+    expect(c).toMatchObject({ kind: "annual_fee", valueCents: 0 });
+  });
+
+  it("$0-fee card renewing outside FEE_WARN_DAYS stays out of expiringSoon", () => {
+    expect(dash.expiringSoon.some((i) => i.cardId === "C")).toBe(false);
+  });
+
+  it("$0-fee card renewing within FEE_WARN_DAYS DOES enter expiringSoon", () => {
+    const soonCard = mkCard({
+      id: "Z",
+      name: "Zero",
+      annualFeeCents: 0,
+      anniversaryDate: "2020-07-30", // window ends 2026-07-29, 1 day out
+    });
+    const d = computeDashboard([soonCard], [], [], TODAY);
+    const z = d.expiringSoon.find((i) => i.cardId === "Z")!;
+    expect(z).toMatchObject({ kind: "annual_fee", valueCents: 0 });
   });
 });
 

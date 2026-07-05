@@ -259,7 +259,7 @@ export interface DashboardPayload {
   expiringSoon: DashboardItem[];
   /** Every active benefit of every active card, current cycle. Grouped client-side by card. */
   current: DashboardItem[];
-  /** One annual_fee item per active card with annualFeeCents > 0, sorted by daysRemaining. */
+  /** One annual_fee item per active card (including $0-fee cards), sorted by daysRemaining. */
   feeRenewals: DashboardItem[];
 }
 

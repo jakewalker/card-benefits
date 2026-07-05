@@ -105,7 +105,9 @@ export default function BenefitRow({
       <div className="benefit-row benefit-row-fee">
         <div className="benefit-row-main">
           <p className="benefit-row-name">
-            {formatCents(valueCents)} annual fee renews{" "}
+            {valueCents && valueCents > 0
+              ? `${formatCents(valueCents)} annual fee renews`
+              : "Renews"}{" "}
             {windowEnd ? formatDate(addDays(windowEnd, 1)) : "soon"}
           </p>
           {cardName && <p className="benefit-row-subtitle">{cardName}</p>}
