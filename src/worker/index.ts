@@ -10,6 +10,7 @@ import benefits from "./routes/benefits";
 import usage from "./routes/usage";
 import dashboard from "./routes/dashboard";
 import parse from "./routes/parse";
+import calendar from "./routes/calendar";
 
 export interface Env {
   DB: D1Database;
@@ -18,6 +19,8 @@ export interface Env {
   AUTH_MODE?: string;
   /** Required when AUTH_MODE=password. */
   APP_PASSWORD?: string;
+  /** Secret guarding the public /calendar/:token/renewals.ics feed. */
+  CALENDAR_TOKEN?: string;
   ASSETS: Fetcher;
 }
 
@@ -33,6 +36,9 @@ app.route("/api", cards);
 app.route("/api", benefits);
 app.route("/api", usage);
 app.route("/api", parse);
+
+// Public (token-gated) — deliberately NOT under /api so authMiddleware skips it.
+app.route("/", calendar);
 
 app.notFound((c) => {
   if (new URL(c.req.url).pathname.startsWith("/api/")) {
