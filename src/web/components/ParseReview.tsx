@@ -83,9 +83,12 @@ export default function ParseReview({
 
   const addBenefit = () => setBenefits((prev) => [...prev, emptyDraft()]);
 
+  // Anniversary date is optional UNLESS a benefit resets on the card anniversary
+  // (its cycle math can't be computed without it).
+  const needsAnniversary = benefits.some((b) => b.anchor === "anniversary");
   const canImport =
     name.trim() !== "" &&
-    anniversaryDate !== "" &&
+    (!needsAnniversary || anniversaryDate !== "") &&
     benefits.every(
       (b) => b.name.trim() !== "" && !!b.frequency && !!b.anchor,
     );
@@ -101,7 +104,7 @@ export default function ParseReview({
         name: name.trim(),
         issuer: issuer.trim() === "" ? null : issuer.trim(),
         annualFeeCents,
-        anniversaryDate,
+        anniversaryDate: anniversaryDate === "" ? null : anniversaryDate,
       },
       benefits: benefits.map((b) => ({
         name: b.name.trim(),

@@ -99,6 +99,11 @@ function anniversaryWindow(
 ): CycleWindow {
   const block = BLOCK_MONTHS[freq];
   const base = card.anniversaryDate;
+  // Invariant: anniversary-anchored math is only reached for cards that have a
+  // date (enforced at every write path). A null here is a programming error.
+  if (base === null) {
+    throw new Error("anniversaryWindow: card has no anniversaryDate");
+  }
   const by = Number(base.slice(0, 4));
   const bm = Number(base.slice(5, 7));
   const dy = Number(date.slice(0, 4));
@@ -229,9 +234,11 @@ export function isExpiringSoon(
 
 /**
  * The card's anniversary-anchored ANNUAL window containing today — used to
- * render "$X annual fee renews on <window.end + 1 day>" pseudo-items.
+ * render "$X annual fee renews on <window.end + 1 day>" pseudo-items. Returns
+ * null when the card has no anniversary date yet (no renewal date to show).
  */
-export function feeRenewalCycle(card: CycleCard, today: ISODate): CycleWindow {
+export function feeRenewalCycle(card: CycleCard, today: ISODate): CycleWindow | null {
+  if (card.anniversaryDate === null) return null;
   return anniversaryWindow("annual", card, today);
 }
 

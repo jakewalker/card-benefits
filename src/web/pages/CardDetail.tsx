@@ -265,7 +265,7 @@ export default function CardDetail() {
       <div className="card">
         <p className="benefit-row-subtitle">
           {formatCents(card.annualFeeCents)} annual fee · anniversary{" "}
-          {formatDate(card.anniversaryDate)}
+          {card.anniversaryDate ? formatDate(card.anniversaryDate) : "not set"}
         </p>
         <p className="benefit-row-subtitle">
           Status: {card.status}

@@ -62,6 +62,11 @@ function usageKey(benefitId: string, cycleKey: string): string {
   return `${benefitId}|${cycleKey}`;
 }
 
+/** 400 with a custom message (validation-class, but not from a ZodError). */
+function invalid(c: Context<AppEnv>, message: string) {
+  return c.json({ error: message, code: "validation" } satisfies ApiError, 400);
+}
+
 const app = new Hono<AppEnv>();
 
 app.get("/cards", async (c) => {
@@ -123,7 +128,7 @@ app.post("/cards", async (c) => {
       name: parsed.data.name,
       issuer: parsed.data.issuer ?? null,
       annualFeeCents: parsed.data.annualFeeCents,
-      anniversaryDate: parsed.data.anniversaryDate,
+      anniversaryDate: parsed.data.anniversaryDate ?? null,
     },
     now,
   );
@@ -136,6 +141,16 @@ app.post("/cards/import", async (c) => {
   const body = await c.req.json().catch(() => null);
   const parsed = importPayloadSchema.safeParse(body);
   if (!parsed.success) return validationError(c, parsed.error);
+
+  if (
+    parsed.data.card.anniversaryDate == null &&
+    parsed.data.benefits.some((b) => b.anchor === "anniversary")
+  ) {
+    return invalid(
+      c,
+      "anniversary-anchored benefits require the card's anniversary date",
+    );
+  }
 
   const now = new Date().toISOString();
   const today = resolveToday(c);
@@ -187,11 +202,23 @@ app.put("/cards/:id", async (c) => {
   const parsed = cardInputSchema.safeParse(body);
   if (!parsed.success) return validationError(c, parsed.error);
 
+  const anniversaryDate = parsed.data.anniversaryDate ?? null;
+  if (anniversaryDate === null) {
+    // Can't strip the date out from under an anniversary-anchored benefit.
+    const benefits = await listBenefitsByCard(c.env.DB, id);
+    if (benefits.some((b) => b.anchor === "anniversary")) {
+      return invalid(
+        c,
+        "can't clear the anniversary date while anniversary-anchored benefits exist",
+      );
+    }
+  }
+
   const card = await updateCardRow(c.env.DB, id, {
     name: parsed.data.name,
     issuer: parsed.data.issuer ?? null,
     annualFeeCents: parsed.data.annualFeeCents,
-    anniversaryDate: parsed.data.anniversaryDate,
+    anniversaryDate,
   });
   if (!card) return notFound(c, "card not found");
   return c.json(card);
@@ -220,6 +247,13 @@ app.post("/cards/:id/benefits", async (c) => {
   const body = await c.req.json().catch(() => null);
   const parsed = benefitInputSchema.safeParse(body);
   if (!parsed.success) return validationError(c, parsed.error);
+
+  if (parsed.data.anchor === "anniversary" && card.anniversaryDate === null) {
+    return invalid(
+      c,
+      "set the card's anniversary date before adding an anniversary-anchored benefit",
+    );
+  }
 
   const today = resolveToday(c);
   const now = new Date().toISOString();

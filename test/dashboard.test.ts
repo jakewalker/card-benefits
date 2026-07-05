@@ -148,6 +148,30 @@ describe("computeDashboard: feeRenewals", () => {
     expect(fee.daysRemaining).toBe(1);
     expect(fee.benefitId).toBeUndefined();
   });
+
+  it("a fee card with no anniversary date produces no renewal item", () => {
+    const dateless = mkCard({
+      id: "D",
+      name: "Dateless",
+      annualFeeCents: 50000,
+      anniversaryDate: null,
+    });
+    const d = computeDashboard([dateless], [], [], TODAY);
+    expect(d.feeRenewals).toHaveLength(0);
+    expect(d.expiringSoon).toHaveLength(0);
+  });
+
+  it("skips an anniversary-anchored benefit on a card with no date", () => {
+    const dateless = mkCard({ id: "E", name: "Echo", anniversaryDate: null });
+    const annivBenefit = mkBenefit({
+      id: "be",
+      cardId: "E",
+      anchor: "anniversary",
+    });
+    const d = computeDashboard([dateless], [annivBenefit], [], TODAY);
+    expect(d.current).toHaveLength(0); // can't place it without a date
+    expect(d.expiringSoon).toHaveLength(0);
+  });
 });
 
 describe("computeDashboard: expiringSoon", () => {

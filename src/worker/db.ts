@@ -32,7 +32,7 @@ interface CardRowDb {
   name: string;
   issuer: string | null;
   annual_fee_cents: number;
-  anniversary_date: string;
+  anniversary_date: string | null;
   status: string;
   closed_at: string | null;
   created_at: string;
@@ -126,7 +126,7 @@ export interface CardWriteFields {
   name: string;
   issuer: string | null;
   annualFeeCents: number;
-  anniversaryDate: ISODate;
+  anniversaryDate: ISODate | null;
 }
 
 export async function listCards(
@@ -488,7 +488,7 @@ export async function importCardWithBenefits(
     name: payload.card.name,
     issuer: payload.card.issuer ?? null,
     annualFeeCents: payload.card.annualFeeCents,
-    anniversaryDate: payload.card.anniversaryDate,
+    anniversaryDate: payload.card.anniversaryDate ?? null,
     status: "active",
     closedAt: null,
     createdAt: now,

@@ -46,7 +46,7 @@ function fieldsToInput(fields: CardFormFields): CardInput {
     name: fields.name.trim(),
     issuer: fields.issuer.trim() ? fields.issuer.trim() : null,
     annualFeeCents: Number.isFinite(dollars) ? Math.round(dollars * 100) : 0,
-    anniversaryDate: fields.anniversaryDate,
+    anniversaryDate: fields.anniversaryDate || null,
   };
 }
 
@@ -55,7 +55,7 @@ function cardToFields(card: Card): CardFormFields {
     name: card.name,
     issuer: card.issuer ?? "",
     annualFeeDollars: (card.annualFeeCents / 100).toString(),
-    anniversaryDate: card.anniversaryDate,
+    anniversaryDate: card.anniversaryDate ?? "",
   };
 }
 
@@ -355,8 +355,8 @@ function CardFieldsForm({ fields, onChange }: CardFieldsFormProps) {
           type="date"
           value={fields.anniversaryDate}
           onChange={(e) => onChange({ ...fields, anniversaryDate: e.target.value })}
-          required
         />
+        <span className="hint">optional — leave blank if you don't know it yet</span>
       </label>
     </>
   );

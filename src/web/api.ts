@@ -448,7 +448,7 @@ const mockApi: ApiClient = {
       name: input.name,
       issuer: input.issuer ?? null,
       annualFeeCents: input.annualFeeCents,
-      anniversaryDate: input.anniversaryDate,
+      anniversaryDate: input.anniversaryDate ?? null,
       status: "active",
       closedAt: null,
       createdAt: new Date().toISOString(),
@@ -475,7 +475,7 @@ const mockApi: ApiClient = {
     card.name = input.name;
     card.issuer = input.issuer ?? null;
     card.annualFeeCents = input.annualFeeCents;
-    card.anniversaryDate = input.anniversaryDate;
+    card.anniversaryDate = input.anniversaryDate ?? null;
     return card;
   },
 
@@ -645,7 +645,7 @@ const mockApi: ApiClient = {
       name: payload.card.name,
       issuer: payload.card.issuer ?? null,
       annualFeeCents: payload.card.annualFeeCents,
-      anniversaryDate: payload.card.anniversaryDate,
+      anniversaryDate: payload.card.anniversaryDate ?? null,
       status: "active",
       closedAt: null,
       createdAt: new Date().toISOString(),

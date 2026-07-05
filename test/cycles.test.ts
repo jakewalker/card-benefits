@@ -287,6 +287,10 @@ describe("feeRenewalCycle", () => {
       end: "2027-02-14",
     });
   });
+
+  it("returns null when the card has no anniversary date", () => {
+    expect(feeRenewalCycle({ anniversaryDate: null }, "2026-06-01")).toBeNull();
+  });
 });
 
 describe("effectiveUsed (automatic x used matrix)", () => {

@@ -62,7 +62,9 @@ export interface Card {
   name: string;
   issuer: string | null;
   annualFeeCents: number;
-  anniversaryDate: ISODate;
+  /** null = not known yet (fill in later). Required for anniversary-anchored
+   *  benefits and for a fee-renewal reminder; calendar benefits don't need it. */
+  anniversaryDate: ISODate | null;
   status: "active" | "closed";
   closedAt: string | null;
   createdAt: string;
@@ -105,7 +107,9 @@ export const cardInputSchema = z.object({
   name: z.string().min(1),
   issuer: z.string().min(1).nullish(),
   annualFeeCents: z.number().int().min(0),
-  anniversaryDate: isoDateSchema,
+  /** null/omitted = not known yet. The worker rejects clearing it while
+   *  anniversary-anchored benefits still depend on it. */
+  anniversaryDate: isoDateSchema.nullish(),
 });
 export type CardInput = z.infer<typeof cardInputSchema>;
 
